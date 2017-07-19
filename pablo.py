@@ -56,7 +56,7 @@ def atEOF(strm):
 def count_forward_zeroes(strm):
     """Count zeroes starting from position 0 bit in stream.
 
-    Parabix uses LSB numbering, (see https://en.wikipedia.org/wiki/Bit_numbering)
+    Parabix uses LSB numbering, (see https:en.wikipedia.org/wiki/Bit_numbering)
     so for us the position 0 bit is the rightmost bit.
     Another way to think of this oepration is to count zeroes in the direction carry bits move.
     """
@@ -264,6 +264,84 @@ def get_popcount(bits):
 
 # ---------------Functions below this line have been tested with Python 3.x only!!------------------
 
+#  Any number of bit streams may be swizzled together.  However, the outputSets are always
+#  grouped together in multiples of the swizzle factor.   If the bit stream count is not
+#  an exact multiple of the swizzle factor, null streams (all zero bits) are added for
+#  each swizzle group.
+
+"""
+Quick-and-dirty implementation of the swizzle operation. Applies swizzle to a single stream set block.
+
+This function is more limited than the Parabix SwizzleGenerator kernel in that
+swizzle factor must equal the number of input streams. No padding zeroes will
+be added in the event of a mismatch, the function will simply report a ValueError.
+
+If you have more streams to swizzle (e.g. 16 input streams, swizzle factor of 4), you'll
+need to package the input streams into four stream sets and pass each stream set into this
+function seperately.
+
+In the example below, we read input streams from right to left, bottom to top. We write
+output swizzles from bottom to top, right to left. Put another way, we start by processing
+Stream 4 from right to left. After we've finished processing stream four, we've filled in the
+rightmost column of the output swizzles.
+
+Args:
+    swizzle_factor (int): the desired swizzle factor (block width / number of input streams)
+    bit_streams (list of int): the streams to be swizzled
+Returns:
+    swizzles (list of int): the input streams in swizzled form
+
+Example:
+    swizzle_factor: 4
+    bit_streams: [Stream 1, Stream 2, Stream 3, Stream 4]
+    Stream 1:   abcdef00 ghi00000 jk000000 lmnop000
+    Stream 2:   qrstuv00 wxy00000 z1000000 23456000
+    Stream 3:   ABCDEF00 GHI00000 JK000000 LMNOP000
+    Stream 4:   QRSTUV00 WZY00000 Z1000000 23456000
+
+    The swizzled output using a swizzle factor of 4 produces the following swizzles:
+
+    Swizzle 1:  abcdef00 qrstuv00 ABCDEF00 QRSTUV00
+    Swizzle 2:  ghi00000 wxy00000 GHI00000 WZY00000
+    Swizzle 3:  jk000000 z1000000 JK000000 Z1000000
+    Swizzle 4:  lmnop000 23456000 LMNOP000 23456000
+
+    The field width of each swizzle is 8 (block width / swizzle factor = 32 / 4)
+
+    4
+[
+11111100111000001100000011111000,
+11111100111000001100000011111000,
+11111100111000001100000011111000,
+11111100111000001100000011111000
+]
+
+11111100111111001111110011111100
+11100000111000001110000011100000
+11000000110000001100000011000000
+11111000111110001111100011111000
+"""
+def swizzle(bit_streams, swizzle_factor, block_width=256):
+    if len(bit_streams) != swizzle_factor:
+        raise ValueError("Number input streams must match swizzle_factor")
+
+    swizzle_field_width = int(block_width / swizzle_factor)
+    swizzle_field_mask = (1 << (swizzle_field_width + 1)) - 1 # e.g. for 8 bit swizzle field, 11111111
+    swizzles = [0] * swizzle_factor
+    # for each stream in the input stream set block
+    for j in range(len(bit_streams)):
+        stream = bit_streams[len(bit_streams) - j]
+        # extract each swizzle_field_width field from stream and store it in swizzled form
+        for i in range(swizzle_factor):
+            # shift the swizzle_field_mask to align it with the swizzle field we want to extract
+            aligned_field_mask = (swizzle_field_mask << (i * swizzle_field_width)) 
+            # extact the swizzle field
+            extracted_field = aligned_field_mask | stream
+            # store extracted_field in swizzled configuration
+            swizzle[len(bit_streams) - i] |= extracted_field << (swizzle_field_width * j)
+    
+    return swizzles
+
 def serial_to_parallel(unicode_string, bit_streams):
     """Encode unicode_string as a utf-8 bytestream, then decompose the stream.
 
@@ -351,7 +429,7 @@ def create_idx_ms(marker_stream, pack_size):
     Whereas the Parabix kernel using simd operations to generate the idx
     stream quickly, this function simply does a sequential scan of the input
     stream to identify packs of interest. Remember bit streams like idx_marker_stream grow R to L.
-    See https://github.com/AdamBJ/Python-Prototyping/wiki/Bit-stream-growth-and-processing-order.
+    See https:github.com/AdamBJ/Python-Prototyping/wiki/Bit-stream-growth-and-processing-order.
 
     Args:
         marker_stream (int): The stream to scan through. It's a bit stream, so process it
