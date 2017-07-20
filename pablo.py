@@ -307,38 +307,29 @@ Example:
     Swizzle 4:  lmnop000 23456000 LMNOP000 23456000
 
     The field width of each swizzle is 8 (block width / swizzle factor = 32 / 4)
-
-    4
-[
-11111100111000001100000011111000,
-11111100111000001100000011111000,
-11111100111000001100000011111000,
-11111100111000001100000011111000
-]
-
-11111100111111001111110011111100
-11100000111000001110000011100000
-11000000110000001100000011000000
-11111000111110001111100011111000
 """
 def swizzle(bit_streams, swizzle_factor, block_width=256):
     if len(bit_streams) != swizzle_factor:
         raise ValueError("Number input streams must match swizzle_factor")
 
     swizzle_field_width = int(block_width / swizzle_factor)
-    swizzle_field_mask = (1 << (swizzle_field_width + 1)) - 1 # e.g. for 8 bit swizzle field, 11111111
+    swizzle_field_mask = (1 << swizzle_field_width) - 1 # e.g. for 8 bit swizzle field, 11111111
     swizzles = [0] * swizzle_factor
+    bit_stream_max_idx = len(bit_streams) - 1
     # for each stream in the input stream set block
+    # 11111100 11100000 11000000 11111000
     for j in range(len(bit_streams)):
-        stream = bit_streams[len(bit_streams) - j]
+        stream = bit_streams[bit_stream_max_idx - j]
         # extract each swizzle_field_width field from stream and store it in swizzled form
         for i in range(swizzle_factor):
             # shift the swizzle_field_mask to align it with the swizzle field we want to extract
             aligned_field_mask = (swizzle_field_mask << (i * swizzle_field_width)) 
             # extact the swizzle field
-            extracted_field = aligned_field_mask | stream
+            extracted_field = (aligned_field_mask & stream) >> (i * swizzle_field_width)
+            debug = bin(extracted_field)
             # store extracted_field in swizzled configuration
-            swizzle[len(bit_streams) - i] |= extracted_field << (swizzle_field_width * j)
+            swizzles[bit_stream_max_idx - i] |= extracted_field << (swizzle_field_width * j)
+            debug2 = bin(swizzles[bit_stream_max_idx - i])
     
     return swizzles
 
