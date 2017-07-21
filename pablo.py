@@ -292,8 +292,8 @@ Args:
 Returns:
     swizzles (list of int): the input streams in swizzled form
 TODO update this example after discussion about how Parabix swizzle works. Seems like example is wrong
--- we actually turn first row into last column. Also, we get column items by reading row from right to left,
-not from left to right!
+-- we actually turn the first row into last column. Also, we get column items from top to bottom by reading
+ rows from right to left (as opposed to left to right as in example).
 Example:
     swizzle_factor: 4
     bit_streams: [Stream 1, Stream 2, Stream 3, Stream 4]
