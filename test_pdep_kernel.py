@@ -31,6 +31,18 @@ class TestPDEPKernel(unittest.TestCase):
             result_swizzle                           = 17 eb bf 7e ff f8 00 00 08 14 40 81 00 00 00 00 00 00 00 00 02 00 00 00 10 28 81 02 04 00 00 00,
         
             num_input_blocks (int): The number of input/output blocks. In the example provided above num_input_blocks is 4.
+        Returns:
+            input_blocks (array of ints): the input blocks in a format the Python code can use
+            pdep_ms_block (int): pdep block ""
+            output_blocks (array of ints): output blocks ""
+
+            E.g.
+            [0]:7308569839543276070860605882704647002519782667084839218520512242113021214784
+            [1]:210624583337114373395836055367340864637790190801098222508621955072
+            [2]:3654284919561013452093188567956487445892550468904629417868863214089089843200
+            [3]:10819726235100219966738542146045191097401082953856532763855286610790526746688
+
+        
         """
         lines = console_output.replace(' ', '')
         lines = lines.split('\n')
@@ -66,9 +78,19 @@ class TestPDEPKernel(unittest.TestCase):
 
         num_input_streams = len(input_streams)
         output_streams = [0] * num_input_streams
+        #PDEP_ms_blk = 1f ff ff ff ff f8 00 00 00 00 00 00 00 00 00 00 00 00 02 00 04 00 00 40 00 04 08 08 00 00 00 40
+
         for i in range(num_input_streams):
             apply_pdep(output_streams, i, pdep_ms, input_streams[i])
+            print("pdep ms")
+            print(hex(pdep_ms))
+            print("source stream")
+            print(hex(input_streams[i]))
+            print("output stream")
+            print(hex(output_streams[i]))
         swizzled_results = swizzle(output_streams, num_input_streams)
+        for swizz in swizzled_results:
+            print(hex(swizz))
         self.assertEqual(expected_output, swizzled_results)
 
     def test_pdeptest(self):

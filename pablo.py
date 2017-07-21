@@ -270,7 +270,8 @@ def get_popcount(bits):
 #  each swizzle group.
 
 """
-Quick-and-dirty implementation of the swizzle operation. Applies swizzle to a single stream set block.
+Quick-and-dirty implementation of the swizzle operation. Loads from input at row j, column i,
+stores in output at column j, row i. Applies swizzle to a single stream set block.
 
 This function is more limited than the Parabix SwizzleGenerator kernel in that
 swizzle factor must equal the number of input streams. No padding zeroes will
@@ -290,7 +291,9 @@ Args:
     bit_streams (list of int): the streams to be swizzled
 Returns:
     swizzles (list of int): the input streams in swizzled form
-
+TODO update this example after discussion about how Parabix swizzle works. Seems like example is wrong
+-- we actually turn first row into last column. Also, we get column items by reading row from right to left,
+not from left to right!
 Example:
     swizzle_factor: 4
     bit_streams: [Stream 1, Stream 2, Stream 3, Stream 4]
@@ -314,22 +317,30 @@ def swizzle(bit_streams, swizzle_factor, block_width=256):
 
     swizzle_field_width = int(block_width / swizzle_factor)
     swizzle_field_mask = (1 << swizzle_field_width) - 1 # e.g. for 8 bit swizzle field, 11111111
+    print(bin(swizzle_field_mask))
     swizzles = [0] * swizzle_factor
+    print("mask")
+    print(hex(swizzle_field_mask))
     bit_stream_max_idx = len(bit_streams) - 1
-    # for each stream in the input stream set block
-    # 11111100 11100000 11000000 11111000
+    # for each stream/row j in the input stream set block
     for j in range(len(bit_streams)):
         stream = bit_streams[bit_stream_max_idx - j]
-        # extract each swizzle_field_width field from stream and store it in swizzled form
+        print("to swizzle")
+        print(hex(stream))
+        # for each column i in row j
         for i in range(swizzle_factor):
             # shift the swizzle_field_mask to align it with the swizzle field we want to extract
             aligned_field_mask = (swizzle_field_mask << (i * swizzle_field_width)) 
-            # extact the swizzle field
+            # extact the swizzle field / column
             extracted_field = (aligned_field_mask & stream) >> (i * swizzle_field_width)
             debug = bin(extracted_field)
-            # store extracted_field in swizzled configuration
+            print("extracted field")
+            print(hex(extracted_field))
+            # store extracted_field in swizzled configuration. Loaded from j, i, store at i, j
             swizzles[bit_stream_max_idx - i] |= extracted_field << (swizzle_field_width * j)
             debug2 = bin(swizzles[bit_stream_max_idx - i])
+            print("out swizzle " + str(i))
+            print(hex(swizzles[bit_stream_max_idx - i]))
     
     return swizzles
 
