@@ -11,7 +11,11 @@ class TestPDEPKernel(unittest.TestCase):
 
     The kernel accepts swizzled input, processes the swizzles, and outputs swizzled streams.
     The Python analog accepts unswizzled input, applies PDEP to each stream in the input, and returns the result.
-    The result is then swizzled and compared to the output of the kernel.
+    The result is then swizzled and compared to the output of the kernel. 
+    
+    Source block represents unswizzled input blocks,
+    result_swizzle is the swizzled results. We pass the source blocks to the Python function and compare the results
+    to result_swizzle.
     """
     def test_wctest(self):
         """
