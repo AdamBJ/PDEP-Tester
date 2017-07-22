@@ -5,9 +5,9 @@ import unittest
 import helper_functions
 
 class TestPDEPKernel(unittest.TestCase):
-    """ 
-    Hard-coded inputs and expected outputs are taken directly from the values given to and
-    returned from the Parabix PDEP kernel.
+    """
+    Hard-coded inputs (source block) and expected outputs (result_swizzle) are taken directly from
+    the values given to and returned from the Parabix PDEP kernel.
 
     The kernel accepts swizzled input, processes the swizzles, and outputs swizzled streams.
     The Python analog accepts unswizzled input, applies PDEP to each stream in the input, and returns the result.
@@ -34,7 +34,7 @@ class TestPDEPKernel(unittest.TestCase):
         helper_functions.compare_expected_actual(self, block_sets)
 
     def test_pdeptest(self):
-        """ 
+        """
         Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
         is passed pdeptest.txt as input.
         """
