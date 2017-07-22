@@ -321,10 +321,9 @@ def swizzle(bit_streams, swizzle_factor, block_width=256):
     swizzles = [0] * swizzle_factor
     print("mask")
     print(hex(swizzle_field_mask))
-    bit_stream_max_idx = len(bit_streams) - 1
     # for each stream/row j in the input stream set block
     for j in range(len(bit_streams)):
-        stream = bit_streams[bit_stream_max_idx - j]
+        stream = bit_streams[j]
         print("to swizzle")
         print(hex(stream))
         # for each column i in row j
@@ -333,14 +332,12 @@ def swizzle(bit_streams, swizzle_factor, block_width=256):
             aligned_field_mask = (swizzle_field_mask << (i * swizzle_field_width)) 
             # extact the swizzle field / column
             extracted_field = (aligned_field_mask & stream) >> (i * swizzle_field_width)
-            debug = bin(extracted_field)
             print("extracted field")
             print(hex(extracted_field))
-            # store extracted_field in swizzled configuration. Loaded from j, i, store at i, j
-            swizzles[bit_stream_max_idx - i] |= extracted_field << (swizzle_field_width * j)
-            debug2 = bin(swizzles[bit_stream_max_idx - i])
+            # store extracted_field in swizzled configuration. We loaded from j, i, store at i, j
+            swizzles[i] |= extracted_field << (swizzle_field_width * j)
             print("out swizzle " + str(i))
-            print(hex(swizzles[bit_stream_max_idx - i]))
+            print(hex(swizzles[i]))
     
     return swizzles
 
