@@ -3,6 +3,7 @@ Contains functions to test the PDEP Parabix kernel.
 """
 import unittest
 import helper_functions
+import pablo
 
 class TestPDEPKernel(unittest.TestCase):
     """
@@ -22,7 +23,7 @@ class TestPDEPKernel(unittest.TestCase):
         Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
         is passed wctest.txt as input.
         """
-        num_input_blocks = 1
+        num_block_sets = 1
         block_sets = helper_functions.format_values(
         """source block                             = 00 00 00 00 00 01 20 88 04 48 10 81 12 10 80 80 82 20 41 22 04 08 10 21 10 81 02 88 10 20 40 11
         source block                             = 00 00 00 00 00 00 d0 44 00 00 00 00 01 00 00 00 00 00 00 01 00 00 00 00 00 00 00 00 00 00 20 00
@@ -33,7 +34,7 @@ class TestPDEPKernel(unittest.TestCase):
         result_swizzle                           = 00 00 02 00 04 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 40
         result_swizzle                           = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         result_swizzle                           = 17 eb bf 7e ff f8 00 00 08 14 40 81 00 00 00 00 00 00 00 00 02 00 00 00 10 28 81 02 04 00 00 00""",
-        4, num_input_blocks)
+        4, num_block_sets)
         
         helper_functions.compare_expected_actual(self, block_sets)
 
@@ -42,7 +43,7 @@ class TestPDEPKernel(unittest.TestCase):
         Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
         is passed pdeptest.txt as input.
         """
-        num_input_blocks = 1
+        num_block_sets = 1
         block_sets = helper_functions.format_values(
         """source block                             = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 80 00 10 08 02 00 20 09 00 84 04 42 08 51
         source block                             = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 40 00 01 00 20
@@ -53,13 +54,17 @@ class TestPDEPKernel(unittest.TestCase):
         result_swizzle                           = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         result_swizzle                           = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         result_swizzle                           = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00""", 
-        4, num_input_blocks)
+        4, num_block_sets)
 
         helper_functions.compare_expected_actual(self, block_sets)
 
 
-    #def test_multiblocktest(self):
+    def test_multiblocktest(self):
+        num_block_sets = 19
+        block_sets = helper_functions.format_values(pablo.readfile("Resources/unicodetest_output.txt"), 4, num_block_sets)
+
+        helper_functions.compare_expected_actual(self, block_sets)
 
 if __name__ == '__main__':
     t = TestPDEPKernel()
-    TestPDEPKernel.test_wctest(t)
+    TestPDEPKernel.test_multiblocktest(t)

@@ -72,6 +72,17 @@ def compare_expected_actual(tester, block_sets):
         num_input_streams = len(input_streams)
         output_streams = [0] * num_input_streams
         for i in range(num_input_streams):
+            print("pdep ms")
+            print(hex(pdep_ms))
+            print("input_stream " + str(i))
+            print(hex(input_streams[i]))
             apply_pdep(output_streams, i, pdep_ms, input_streams[i])
+            print("unswizzled output " + str(i))
+            print(hex(output_streams[i]))
         swizzled_results = swizzle(output_streams, num_input_streams)
+        for i in range(num_input_streams):
+            print("expected_output " + str(i))
+            print(hex(expected_output[i]))
+            print ("swizzled output " + str(i))
+            print(hex(swizzled_results[i]))
         tester.assertEqual(expected_output, swizzled_results)
