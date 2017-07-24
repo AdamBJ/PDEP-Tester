@@ -58,8 +58,11 @@ class TestPDEPKernel(unittest.TestCase):
 
         helper_functions.compare_expected_actual(self, block_sets)
 
-
     def test_multiblocktest(self):
+        """
+        Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
+        is passed unicodetest.txt as input.
+        """
         num_block_sets = 19
         block_sets = helper_functions.format_values(pablo.readfile("Resources/unicodetest_output.txt"), 4, num_block_sets)
 

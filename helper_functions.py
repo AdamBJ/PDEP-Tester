@@ -2,7 +2,6 @@
 Contains helper functions used in test_pdep_kernel.py
 """
 from pablo import apply_pdep, swizzle, get_popcount
-import queue
 
 def format_values(console_output, num_input_blocks, num_block_sets=1):
         """
@@ -66,36 +65,47 @@ def format_values(console_output, num_input_blocks, num_block_sets=1):
 def compare_expected_actual(tester, block_sets, block_width=256, num_input_blocks=4):
     """
     For each block set, compare expected values (the output from the Python PDEP function) with the
-    actual output from the Parabix PDEP function. TODO expand
+    actual output from the Parabix PDEP function.
+
+    Args:
+        tester (TestPDEPKernel): TestPDEPKernel object. Used to invoke the assertEqual function.
+        block_sets (list of str tuples): Each tuple contains the information we need to verify a single
+            block's worth of input/output. This includes the input blocks that are passed into the Parabix/Python 
+            programs, the PDEP marker stream block used to process the input blocks, and the expected output 
+            (i.e. the output produced by the Parabix program).
+        block_width (int): The width of a block in the Parabix program. Used when we stitch blocks of input 
+            together into a single, long input block that gets passed to the Python program.
+        num_input_blocks (int): The number of input (and output) blocks in a single block set.
+
     """
     input_streams = [0] * num_input_blocks
     num_bits_consumed = 0
     for j, block_set in enumerate(block_sets):
         input_blocks, pdep_ms, expected_output = block_set # unpack tuple
         for i in range(num_input_blocks):
-            # add block to the input stream it belongs to
+            # append input block to the input stream it belongs to
             input_streams[i] |= input_blocks[i] << (block_width * j)
-            print("input block "+ str(i))
-            print(hex(input_blocks[i]))
+            # print("input block "+ str(i))
+            # print(hex(input_blocks[i]))
 
         output_streams = [0] * num_input_blocks
         for i in range(num_input_blocks):
-            print("pdep ms")
-            print(hex(pdep_ms))
-            print("unshifted input_stream " + str(i))
-            print(hex(input_streams[i]))
-            print("input_stream " + str(i))
-            print(hex(input_streams[i] >> num_bits_consumed))
+            # print("pdep ms")
+            # print(hex(pdep_ms))
+            # print("unshifted input_stream " + str(i))
+            # print(hex(input_streams[i]))
+            # print("input_stream " + str(i))
+            # print(hex(input_streams[i] >> num_bits_consumed))
             apply_pdep(output_streams, i, pdep_ms, input_streams[i] >> num_bits_consumed)
-            print("unswizzled output " + str(i))
-            print(hex(output_streams[i]))
-            print("number bits consumed " + str(num_bits_consumed))
+            # print("unswizzled output " + str(i))
+            # print(hex(output_streams[i]))
+            # print("number bits consumed " + str(num_bits_consumed))
 
         num_bits_consumed += get_popcount(pdep_ms)
         swizzled_results = swizzle(output_streams, num_input_blocks)
-        for i in range(num_input_blocks):
-            print("expected_output " + str(i))
-            print(hex(expected_output[i]))
-            print ("swizzled output " + str(i))
-            print(hex(swizzled_results[i]))
+        # for i in range(num_input_blocks):
+        #     print("expected_output " + str(i))
+        #     print(hex(expected_output[i]))
+        #     print ("swizzled output " + str(i))
+        #     print(hex(swizzled_results[i]))
         tester.assertEqual(expected_output, swizzled_results)
