@@ -1,7 +1,8 @@
 """
 Contains helper functions used in test_pdep_kernel.py
 """
-from pablo import apply_pdep, swizzle
+from pablo import apply_pdep, swizzle, get_popcount
+import queue
 
 def format_values(console_output, num_input_blocks, num_block_sets=1):
         """
@@ -22,7 +23,7 @@ def format_values(console_output, num_input_blocks, num_block_sets=1):
             result_swizzle                           = 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
             result_swizzle                           = 17 eb bf 7e ff f8 00 00 08 14 40 81 00 00 00 00 00 00 00 00 02 00 00 00 10 28 81 02 04 00 00 00,
         
-            num_input_blocks (int): The number of input/output blocks. In the example provided above, num_input_blocks is 4.
+            num_input_blocks (int): The number of input/output blocks contained in a block set. In the example provided above, num_input_blocks is 4.
             num_block_sets (int): The number of input/pdep/output sets contained in console_input. This number is equivalent to the number of blocks processed
             by the Parabix kernel.
         Returns:
@@ -62,25 +63,37 @@ def format_values(console_output, num_input_blocks, num_block_sets=1):
 
         return block_sets
 
-def compare_expected_actual(tester, block_sets):
+def compare_expected_actual(tester, block_sets, block_width=256, num_input_blocks=4):
     """
     For each block set, compare expected values (the output from the Python PDEP function) with the
     actual output from the Parabix PDEP function. TODO expand
     """
-    for block_set in block_sets:
-        input_streams, pdep_ms, expected_output = block_set # unpack tuplez
-        num_input_streams = len(input_streams)
-        output_streams = [0] * num_input_streams
-        for i in range(num_input_streams):
+    input_streams = [0] * num_input_blocks
+    num_bits_consumed = 0
+    for j, block_set in enumerate(block_sets):
+        input_blocks, pdep_ms, expected_output = block_set # unpack tuple
+        for i in range(num_input_blocks):
+            # add block to the input stream it belongs to
+            input_streams[i] |= input_blocks[i] << (block_width * j)
+            print("input block "+ str(i))
+            print(hex(input_blocks[i]))
+
+        output_streams = [0] * num_input_blocks
+        for i in range(num_input_blocks):
             print("pdep ms")
             print(hex(pdep_ms))
-            print("input_stream " + str(i))
+            print("unshifted input_stream " + str(i))
             print(hex(input_streams[i]))
-            apply_pdep(output_streams, i, pdep_ms, input_streams[i])
+            print("input_stream " + str(i))
+            print(hex(input_streams[i] >> num_bits_consumed))
+            apply_pdep(output_streams, i, pdep_ms, input_streams[i] >> num_bits_consumed)
             print("unswizzled output " + str(i))
             print(hex(output_streams[i]))
-        swizzled_results = swizzle(output_streams, num_input_streams)
-        for i in range(num_input_streams):
+            print("number bits consumed " + str(num_bits_consumed))
+
+        num_bits_consumed += get_popcount(pdep_ms)
+        swizzled_results = swizzle(output_streams, num_input_blocks)
+        for i in range(num_input_blocks):
             print("expected_output " + str(i))
             print(hex(expected_output[i]))
             print ("swizzled output " + str(i))
