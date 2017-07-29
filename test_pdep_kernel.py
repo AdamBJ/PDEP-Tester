@@ -58,7 +58,7 @@ class TestPDEPKernel(unittest.TestCase):
 
         helper_functions.compare_expected_actual(self, block_sets)
 
-    def test_multiblocktest(self):
+    def test_unicodetest(self):
         """
         Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
         is passed unicodetest.txt as input.
@@ -68,6 +68,19 @@ class TestPDEPKernel(unittest.TestCase):
 
         helper_functions.compare_expected_actual(self, block_sets)
 
+    def test_unicodetest2(self):
+        """
+        Verifies the behaviour of the Parabix PDEP kernel when the pdep kernel pipeline
+        is passed unicodetest.txt as input. This test uses an extrememly
+        dense PDEP marker stream to ensure that multiple source blocks are consumed (I went into
+        wc and changed the PDEP marker stream from the character class stream for 'a' to
+        the character class stream for not(space))
+        """
+        num_block_sets = 19
+        block_sets = helper_functions.format_values(pablo.readfile("Resources/unicodetest_dense_output.txt"), 4, num_block_sets)
+
+        helper_functions.compare_expected_actual(self, block_sets)
+        
 if __name__ == '__main__':
     t = TestPDEPKernel()
-    TestPDEPKernel.test_multiblocktest(t)
+    TestPDEPKernel.test_unicodetest(t)
